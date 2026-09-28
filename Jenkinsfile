@@ -29,7 +29,16 @@ pipeline {
 
         stage('Docker Push') {
             steps {
-                bat 'docker push ramana1771/game-studio-showcase:1.0'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USERNAME',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
+
+                    bat 'docker login -u "%DOCKER_USERNAME%" -p "%DOCKER_PASSWORD%"'
+
+                    bat 'docker push ramana1771/game-studio-showcase:1.0'
+                }
             }
         }
     }
