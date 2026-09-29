@@ -1,14 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = 'ramana1771/game-studio-showcase'
+        IMAGE_TAG  = '1.0'
+    }
+
     stages {
-
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Install Dependencies') {
             steps {
                 bat 'npm ci'
@@ -29,7 +27,7 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                bat 'docker build -t ramana1771/game-studio-showcase:1.0 .'
+                bat 'docker build -t %IMAGE_NAME%:%IMAGE_TAG% -t %IMAGE_NAME%:latest .'
             }
         }
 
@@ -38,16 +36,18 @@ pipeline {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-credentials',
                     usernameVariable: 'DOCKER_USERNAME',
-                    passwordVariable: 'DOCKER_PASSWORD'
-                )]) {
-
-                    bat '''
-                        echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin
-                    '''
-
-                    bat 'docker push ramana1771/game-studio-showcase:1.0'
+                    passwordVariable: 'DOCKER_PASSWORD')]) {
+                    bat 'echo %DOCKER_PASSWORD%| docker login -u %DOCKER_USERNAME% --password-stdin'
+                    bat 'docker push %IMAGE_NAME%:%IMAGE_TAG%'
+                    bat 'docker push %IMAGE_NAME%:latest'
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            bat 'docker logout'
         }
     }
 }
